@@ -6,7 +6,7 @@ export type ParsingToken = {
 };
 
 export type ConfigPrefix = {
-   configPath: string;
+   configFile: Uri;
    baseUrl: string;
    paths: {
       [path: string]: [string];
@@ -16,4 +16,10 @@ export type ConfigPrefix = {
 export type ExportToken = {
    file: Uri;
    exports: ParsingToken[];
+   config: ConfigPrefix;
+};
+
+export type PrefixedFile = {
+   config: ConfigPrefix;
+   files: Uri[];
 };

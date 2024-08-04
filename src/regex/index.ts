@@ -1,4 +1,4 @@
-import { ParsingToken } from '../types';
+import { ParsingToken } from '../common/types';
 import * as regex from './expressions';
 
 export function checkExports(code: string): ParsingToken[] {

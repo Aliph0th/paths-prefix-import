@@ -1,9 +1,10 @@
 import { Uri, workspace } from 'vscode';
-import { ConfigPrefix, ExportToken, ParsingToken } from './types';
+import { ConfigPrefix, ExportToken, ParsingToken, PrefixedFile } from './common/types';
 import { Notifier } from './notifier';
 import path from 'path';
 import { checkExports, regex } from './regex';
 import JSON5 from 'json5';
+import { joinPrefixedFiles } from './common/helpers';
 
 export class Scanner {
    async findFiles(path: string) {
@@ -23,7 +24,7 @@ export class Scanner {
                   compilerOptions: { baseUrl, paths }
                } = cfg;
                configs.push({
-                  configPath: config.fsPath,
+                  configFile: config,
                   baseUrl,
                   paths
                });
@@ -36,11 +37,11 @@ export class Scanner {
    }
 
    async findPrefixedFiles(configs: ConfigPrefix[]) {
-      const prefixedFiles: Uri[] = [];
+      let prefixedFiles: PrefixedFile[] = [];
       for (const config of configs) {
          for (const pathPrefix in config.paths) {
             let prefixedFilesPath: string = path.join(
-               path.dirname(config.configPath),
+               path.dirname(config.configFile.fsPath),
                config.baseUrl,
                config.paths[pathPrefix][0]
             );
@@ -50,26 +51,25 @@ export class Scanner {
                   : `${path.sep}*`
             }.ts`;
             const files = await this.findFiles(prefixedFilesPath);
-            prefixedFiles.push(
-               ...files.filter(file =>
-                  prefixedFiles.every(prefixedFile => prefixedFile.fsPath !== file.fsPath)
-               )
-            );
+            prefixedFiles = joinPrefixedFiles(prefixedFiles, files, config);
          }
       }
       return prefixedFiles;
    }
 
-   async parseExportTokens(files: Uri[]) {
+   async parseExportTokens(prefixedFiles: PrefixedFile[]) {
       const tokens: ExportToken[] = [];
-      for (const file of files) {
-         const code = (await workspace.fs.readFile(file)).toString();
-         const parsingResult = checkExports(code);
-         if (parsingResult.length) {
-            tokens.push({
-               file,
-               exports: parsingResult
-            });
+      for (const prefixedFile of prefixedFiles) {
+         for (const file of prefixedFile.files) {
+            const code = (await workspace.fs.readFile(file)).toString();
+            const parsingResult = checkExports(code);
+            if (parsingResult.length) {
+               tokens.push({
+                  file,
+                  exports: parsingResult,
+                  config: prefixedFile.config
+               });
+            }
          }
       }
       return tokens;
