@@ -20,7 +20,7 @@ export class PrefixImport {
    private readonly cache: Cache;
    constructor(scanner: Scanner, cache: Cache) {
       this.scanner = scanner;
-      this.statusBar.text = 'Prefixes: 0';
+      this.statusBar.text = '{0}';
       this.statusBar.show();
       this.cache = cache;
    }
@@ -35,7 +35,7 @@ export class PrefixImport {
       const prefixedFiles = await this.scanner.findPrefixedFiles(configs);
       const parsedTokens = await this.scanner.parseExportTokens(prefixedFiles);
       this.cache.push(parsedTokens);
-      this.statusBar.text = `Prefixes: ${this.cache.length}`;
+      this.statusBar.text = `{${this.cache.length}}`;
    }
 
    updateImports(data: CompletionDataItem, document: TextDocument) {
@@ -52,7 +52,7 @@ export class PrefixImport {
       }
 
       const statement = this.findInImports(document, importPath);
-      if (statement) {
+      if (!!statement) {
          edit.replace(
             document.uri,
             new Range(0, 0, document.lineCount, 0),
@@ -74,12 +74,12 @@ export class PrefixImport {
       currentStatement: string,
       token: string,
       importPath: string
-   ): string {
+   ) {
       const documentText = document.getText();
-
-      const importNames = currentStatement.match(regex.importStatement)!.groups?.names!;
+      const importNames = currentStatement.match(regex.importNames)![0].trim();
       const importArray = importNames.split(',');
       importArray.push(token);
+      console.log(importArray);
       const newImport = this.createImportStatement(importArray.join(', '), importPath);
 
       return documentText.replace(currentStatement, newImport);
@@ -105,7 +105,9 @@ export class PrefixImport {
          data.baseUrl,
          data.prefixPath.replace(regex.oneAsteriskAtTheEnd, '')
       );
-      const suffix = path.relative(pathToImport, data.file.fsPath);
-      return path.join(data.prefix, suffix.replace(regex.indexFile, ''));
+      const suffix = path
+         .relative(pathToImport, data.file.fsPath)
+         .replace(new RegExp(`${path.extname(data.file.fsPath)}$`), '');
+      return path.join(data.prefix, suffix.replace(/index$/, '')).replace(/\\/g, '/');
    }
 }

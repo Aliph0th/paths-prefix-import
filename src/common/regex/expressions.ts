@@ -2,10 +2,10 @@ export const oneAsteriskAtTheEnd = /[^*][*]$/gm;
 export const hasFileExtensionAtTheEnd = /(?:\.ts|\.js)$/gi;
 export const splitter = /\s*,\s*/gm;
 export const alias = /\w+\s*as\s*/gm;
-export const indexFile = /index.(ts|js)/g;
+export const importNames = /(?<={)[\w ,]+(?=})/g;
 
 export const importStatement =
-   /^\s*import\s*{\s*(?<names>[\w ,]+)}\s*from\s*(['"])(?<path>[\w\/\\.]*)\2/gm;
+   /^\s*import\s*{\s*(?<names>[\w ,]+)}\s*from\s*(['"])(?<path>[\w\/\\.@#$%^&*!]*)\2;?/gm;
 
 export const checkExpressions = [
    // export (class | interface | let | var | const | enum | type | function | function*) EntityName;
@@ -18,5 +18,5 @@ export const checkExpressions = [
    /^\s*export\s*(?<names>\*)\s*from\s*(['"])(?<path>[\w\/\\.-]*)\2/gm,
 
    // export { EntityName, EntityName2 as EntityName3 } from 'path/to/file';
-   /^\s*export\s*{\s*(?<names>[\w ,]+)}\s*from\s*(['"])(?<path>[\w\/\\.]*)\2/gm
+   /^\s*export\s*{\s*(?<names>[\w ,]+)}\s*from\s*(['"])(?<path>[\w\/\\.@#$%^&*!]*)\2/gm
 ];
