@@ -13,13 +13,19 @@ export type ConfigPrefix = {
    };
 };
 
-export type ExportToken = {
-   file: Uri;
-   exports: ParsingToken[];
-   config: ConfigPrefix;
+export type PrefixedFile = {
+   files: Uri[];
+   configPath: string;
+   prefix: string;
+   prefixPath: string;
+   baseUrl: string;
 };
 
-export type PrefixedFile = {
-   config: ConfigPrefix;
-   files: Uri[];
-};
+export type ExportToken = {
+   file: Uri;
+   exports: string[];
+} & Omit<PrefixedFile, 'files'>;
+
+export type CompletionDataItem = {
+   token: string;
+} & Omit<ExportToken, 'exports'>;

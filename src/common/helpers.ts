@@ -1,16 +1,24 @@
 import { Uri } from 'vscode';
-import { ConfigPrefix, PrefixedFile } from './types';
+import { CompletionDataItem, ConfigPrefix, PrefixedFile } from './types';
 
-export function joinPrefixedFiles(array: PrefixedFile[], newArray: Uri[], config: ConfigPrefix) {
+export function joinPrefixedFiles(
+   array: PrefixedFile[],
+   newArray: Uri[],
+   config: ConfigPrefix,
+   prefix: string
+) {
    const existingRecord = array.find(
-      prefixedFile => prefixedFile.config.configFile.fsPath === config.configFile.fsPath
+      prefixedFile => prefixedFile.configPath === config.configFile.fsPath
    );
    if (existingRecord) {
       existingRecord.files = joinFiles(existingRecord.files, newArray);
    } else {
       array.push({
-         config,
-         files: newArray
+         configPath: config.configFile.fsPath,
+         files: newArray,
+         prefix,
+         prefixPath: config.paths[prefix][0],
+         baseUrl: config.baseUrl
       });
    }
    return array;

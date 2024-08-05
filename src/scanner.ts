@@ -1,10 +1,10 @@
-import { Uri, workspace } from 'vscode';
+import JSON5 from 'json5';
+import path from 'path';
+import { workspace } from 'vscode';
+import { joinPrefixedFiles } from './common/helpers';
 import { ConfigPrefix, ExportToken, ParsingToken, PrefixedFile } from './common/types';
 import { Notifier } from './notifier';
-import path from 'path';
-import { checkExports, regex } from './regex';
-import JSON5 from 'json5';
-import { joinPrefixedFiles } from './common/helpers';
+import { checkRegex, regex } from './common/regex';
 
 export class Scanner {
    async findFiles(path: string) {
@@ -39,11 +39,11 @@ export class Scanner {
    async findPrefixedFiles(configs: ConfigPrefix[]) {
       let prefixedFiles: PrefixedFile[] = [];
       for (const config of configs) {
-         for (const pathPrefix in config.paths) {
+         for (const prefix in config.paths) {
             let prefixedFilesPath: string = path.join(
                path.dirname(config.configFile.fsPath),
                config.baseUrl,
-               config.paths[pathPrefix][0]
+               config.paths[prefix][0]
             );
             prefixedFilesPath += `${
                prefixedFilesPath.match(regex.oneAsteriskAtTheEnd)
@@ -51,7 +51,7 @@ export class Scanner {
                   : `${path.sep}*`
             }.ts`;
             const files = await this.findFiles(prefixedFilesPath);
-            prefixedFiles = joinPrefixedFiles(prefixedFiles, files, config);
+            prefixedFiles = joinPrefixedFiles(prefixedFiles, files, config, prefix);
          }
       }
       return prefixedFiles;
@@ -59,19 +59,33 @@ export class Scanner {
 
    async parseExportTokens(prefixedFiles: PrefixedFile[]) {
       const tokens: ExportToken[] = [];
-      for (const prefixedFile of prefixedFiles) {
-         for (const file of prefixedFile.files) {
+      for (const { files, ...prefixedFile } of prefixedFiles) {
+         for (const file of files) {
             const code = (await workspace.fs.readFile(file)).toString();
-            const parsingResult = checkExports(code);
-            if (parsingResult.length) {
+            const parsingResults = this.checkExports(code);
+            if (parsingResults.length) {
                tokens.push({
                   file,
-                  exports: parsingResult,
-                  config: prefixedFile.config
+                  exports: parsingResults.reduce<string[]>((prev, x) => {
+                     prev.push(...x.names);
+                     return prev;
+                  }, []),
+                  ...prefixedFile
                });
             }
          }
       }
       return tokens;
+   }
+
+   checkExports(code: string): ParsingToken[] {
+      const checks = regex.checkExpressions.map(expression => checkRegex(code, expression));
+
+      return checks.reduce<ParsingToken[]>((prev, curr) => {
+         if (curr) {
+            prev.push(...curr);
+         }
+         return prev;
+      }, []);
    }
 }

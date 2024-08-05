@@ -1,3 +1,4 @@
+import { Cache } from './cache';
 import {
    CancellationToken,
    CompletionContext,
@@ -8,20 +9,33 @@ import {
    ProviderResult,
    TextDocument
 } from 'vscode';
+import * as vscode from 'vscode';
+import { CompletionDataItem } from './common/types';
 
 export class CompletionProvider implements CompletionItemProvider {
+   constructor(private readonly cache: Cache) {}
    provideCompletionItems(
       document: TextDocument,
       position: Position,
       token: CancellationToken,
       context: CompletionContext
    ): ProviderResult<CompletionItem[] | CompletionList<CompletionItem>> {
-      throw new Error('Method not implemented.');
+      const range = document.getWordRangeAtPosition(position);
+      const textToComplete = range ? document.getText(new vscode.Range(range.start, position)) : '';
+      const completionsData = this.cache.lookFor(textToComplete);
+      return completionsData.map(item => this.buildCompletion(item, document));
    }
-   resolveCompletionItem?(
-      item: CompletionItem,
-      token: CancellationToken
-   ): ProviderResult<CompletionItem> {
-      throw new Error('Method not implemented.');
+
+   private buildCompletion(data: CompletionDataItem, document: TextDocument): CompletionItem {
+      return {
+         label: data.token,
+         kind: vscode.CompletionItemKind.Reference,
+         detail: `Import ${data.token}`,
+         command: {
+            title: 'Auto-import',
+            command: 'paths-prefix-import.updateImports',
+            arguments: [{ data, document }]
+         }
+      };
    }
 }
