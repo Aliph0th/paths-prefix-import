@@ -22,7 +22,9 @@ export class CompletionProvider implements CompletionItemProvider {
    ): ProviderResult<CompletionItem[] | CompletionList<CompletionItem>> {
       const range = document.getWordRangeAtPosition(position);
       const textToComplete = range ? document.getText(new vscode.Range(range.start, position)) : '';
-      const completionsData = this.cache.lookFor(textToComplete);
+
+      const uriWorkspace = vscode.workspace.getWorkspaceFolder(document.uri);
+      const completionsData = this.cache.lookForCompletions(textToComplete, uriWorkspace);
       return completionsData.map(item => this.buildCompletion(item, document));
    }
 

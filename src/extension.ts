@@ -12,25 +12,14 @@ let cache: Cache | null = null;
 export function activate(context: vscode.ExtensionContext) {
    cache = new Cache();
    scanner = new Scanner();
-   prefixImport = new PrefixImport(scanner, cache);
    completionProvider = new CompletionProvider(cache);
-   const scanCommand = vscode.commands.registerCommand('paths-prefix-import.scan-prefixes', () =>
-      prefixImport!.scanPrefixes()
-   );
-   const updateImports = vscode.commands.registerCommand(
-      'paths-prefix-import.updateImports',
-      args => {
-         prefixImport!.updateImports(args.data, args.document);
-      }
-   );
-   const completionItemProvider = vscode.languages.registerCompletionItemProvider(
-      ['typescript'],
-      completionProvider
-   );
 
-   context.subscriptions.push(scanCommand, completionItemProvider, updateImports);
+   prefixImport = new PrefixImport(context, scanner, cache, completionProvider);
 
-   prefixImport!.scanPrefixes();
+   prefixImport.initSubscriptions();
+   prefixImport.initFileWatchers();
+
+   prefixImport.scanPrefixes();
 }
 
 export function deactivate() {

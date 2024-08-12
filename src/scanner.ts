@@ -12,7 +12,7 @@ export class Scanner {
       return await workspace.findFiles(relativePath, '**/node_modules/**', 999999);
    }
 
-   async findConfigs(rootDir: string) {
+   async findConfigs() {
       const files = await this.findFiles('**/tsconfig*.json');
       const configs: ConfigPrefix[] = [];
       for (const config of files) {
