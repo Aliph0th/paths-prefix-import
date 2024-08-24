@@ -1,10 +1,10 @@
 import { Uri } from 'vscode';
-import { CompletionDataItem, ConfigPrefix, PrefixedFile } from './types';
+import { CompletionDataItem, PrefixConfig, PrefixedFile } from './types';
 
 export function joinPrefixedFiles(
    array: PrefixedFile[],
    newArray: Uri[],
-   config: ConfigPrefix,
+   config: PrefixConfig,
    prefix: string
 ) {
    const existingRecord = array.find(

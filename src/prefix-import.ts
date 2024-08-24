@@ -58,12 +58,13 @@ export class PrefixImport {
       const codeWatcher = workspace.createFileSystemWatcher('**/*.ts');
       const configWatcher = workspace.createFileSystemWatcher('**/tsconfig*.json');
 
-      codeWatcher.onDidChange((file: Uri) => {
-         this.onChangeFile(file);
+      codeWatcher.onDidChange(async (file: Uri) => {
+         await this.onChangeFile(file);
          this.statusBar.text = `{${this.cache.length}}`;
       });
 
-      codeWatcher.onDidCreate((file: Uri) => {
+      codeWatcher.onDidCreate(async (file: Uri) => {
+         await this.onCreateFile(file);
          this.statusBar.text = `{${this.cache.length}}`;
       });
 
@@ -80,14 +81,33 @@ export class PrefixImport {
          return;
       }
       const configs = await this.scanner.findConfigs();
+      if (configs.length) {
+         this.cache.pushConfigs(configs);
+      }
       const prefixedFiles = await this.scanner.findPrefixedFiles(configs);
       const parsedTokens = await this.scanner.parseExportTokens(prefixedFiles);
-      this.cache.push(parsedTokens);
-      this.statusBar.text = `{${this.cache.length}}`;
+      if (parsedTokens.length) {
+         this.cache.pushTokens(parsedTokens);
+         this.statusBar.text = `{${this.cache.length}}`;
+      }
+   }
+
+   async onCreateFile(file: Uri) {
+      const data = this.cache.isFileAffected(file);
+      if (!data) {
+         return;
+      }
+      const prefixedFile: PrefixedFile = {
+         files: [file],
+         ...data
+      };
+      const newExportTokens = await this.scanner.parseExportTokens([prefixedFile]);
+      this.cache.pushTokens(newExportTokens);
+      console.log(newExportTokens);
    }
 
    async onChangeFile(changedFile: Uri) {
-      const { exportToken, index } = this.cache.findByFile(changedFile);
+      const { exportToken, index } = this.cache.findTokenByFile(changedFile);
       if (!exportToken) {
          return;
       }

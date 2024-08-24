@@ -1,14 +1,39 @@
+import path from 'path';
 import { Uri, workspace, WorkspaceFolder } from 'vscode';
-import { CompletionDataItem, ExportToken } from './common/types';
+import { CompletionDataItem, ExportToken, PrefixConfig } from './common/types';
+import wcmatch from 'wildcard-match';
+import { regex } from './common/regex';
 
 export class Cache {
-   exports: ExportToken[] = [];
+   private exports: ExportToken[] = [];
+   private configs: PrefixConfig[] = [];
 
    get length() {
       return this.exports.reduce((prev, token) => (prev += token.exports.length), 0);
    }
 
-   push(exports: ExportToken[]) {
+   isFileAffected(file: Uri) {
+      for (const config of this.configs) {
+         for (const [prefix, [pathWildcard]] of Object.entries(config.paths)) {
+            const pathPattern =
+               path
+                  .resolve(path.dirname(config.configFile.fsPath), config.baseUrl, pathWildcard)
+                  .replaceAll('\\', '/') +
+               `${pathWildcard.match(regex.oneAsteriskAtTheEnd) ? '*' : `${path.sep}*`}`;
+            if (wcmatch(pathPattern)(file.fsPath.replaceAll('\\', '/'))) {
+               return {
+                  baseUrl: config.baseUrl,
+                  configPath: config.configFile.fsPath,
+                  prefixPath: pathWildcard,
+                  prefix
+               };
+            }
+         }
+      }
+      return false;
+   }
+
+   pushTokens(exports: ExportToken[]) {
       for (const exportToken of exports) {
          const existingExport = this.exports.find(
             exp => exp.file.fsPath === exportToken.file.fsPath
@@ -22,7 +47,20 @@ export class Cache {
       }
    }
 
-   findByFile(file: Uri) {
+   pushConfigs(configs: PrefixConfig[]) {
+      for (const config of configs) {
+         const existingConfig = this.configs.find(
+            prefixConfig => prefixConfig.configFile.fsPath === config.configFile.fsPath
+         );
+         if (existingConfig) {
+            existingConfig.paths = { ...existingConfig.paths, ...config.paths };
+         } else {
+            this.configs.push(config);
+         }
+      }
+   }
+
+   findTokenByFile(file: Uri) {
       const index = this.exports.findIndex(exportToken => exportToken.file.fsPath === file.fsPath);
       return { exportToken: this.exports[index], index };
    }
@@ -40,7 +78,8 @@ export class Cache {
                .map(match => ({ token: match, ...item }))
                .filter(
                   dataItem =>
-                     workspace.getWorkspaceFolder(dataItem.file)?.index === uriWorkspace?.index
+                     workspace.getWorkspaceFolder(dataItem.file)?.index === uriWorkspace?.index ||
+                     uriWorkspace === undefined
                )
          );
          return items;

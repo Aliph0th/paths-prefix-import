@@ -2,7 +2,7 @@ import JSON5 from 'json5';
 import path from 'path';
 import { workspace } from 'vscode';
 import { joinPrefixedFiles } from './common/helpers';
-import { ConfigPrefix, ExportToken, ParsingToken, PrefixedFile } from './common/types';
+import { PrefixConfig, ExportToken, ParsingToken, PrefixedFile } from './common/types';
 import { Notifier } from './notifier';
 import { checkRegex, regex } from './common/regex';
 
@@ -14,7 +14,7 @@ export class Scanner {
 
    async findConfigs() {
       const files = await this.findFiles('**/tsconfig*.json');
-      const configs: ConfigPrefix[] = [];
+      const configs: PrefixConfig[] = [];
       for (const config of files) {
          try {
             const file = await workspace.fs.readFile(config);
@@ -36,7 +36,7 @@ export class Scanner {
       return configs;
    }
 
-   async findPrefixedFiles(configs: ConfigPrefix[]) {
+   async findPrefixedFiles(configs: PrefixConfig[]) {
       let prefixedFiles: PrefixedFile[] = [];
       for (const config of configs) {
          for (const prefix in config.paths) {
