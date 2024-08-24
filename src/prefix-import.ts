@@ -130,13 +130,13 @@ export class PrefixImport {
       document: TextDocument,
       importPath: string
    ): WorkspaceEdit {
-      const edit: WorkspaceEdit = new WorkspaceEdit();
+      const edit = new WorkspaceEdit();
 
-      if (!!this.findInImports(document, data.token)) {
+      if (!!this.findInImports(document, { searchNames: data.token })) {
          return edit;
       }
 
-      const statement = this.findInImports(document, importPath);
+      const statement = this.findInImports(document, { searchPath: importPath });
       if (!!statement) {
          edit.replace(
             document.uri,
@@ -162,7 +162,7 @@ export class PrefixImport {
    ) {
       const documentText = document.getText();
       const importNames = currentStatement.match(regex.importNames)![0].trim();
-      const importArray = importNames.split(',');
+      const importArray = importNames.split(/,\s*/).filter(Boolean);
       importArray.push(token);
       const newImport = this.createImportStatement(importArray.join(', '), importPath);
 
@@ -173,10 +173,16 @@ export class PrefixImport {
       return `import { ${token} } from '${importPath}';${endline ? '\r\n' : ''}`;
    }
 
-   private findInImports(document: TextDocument, substring: string) {
+   private findInImports(
+      document: TextDocument,
+      { searchNames, searchPath }: { searchNames?: string; searchPath?: string }
+   ) {
       const matches = document.getText().matchAll(regex.importStatement);
       for (const match of matches) {
-         if (match[0].includes(substring)) {
+         if (searchNames && match.groups?.names.includes(searchNames)) {
+            return match[0];
+         }
+         if (searchPath && match.groups?.path === searchPath) {
             return match[0];
          }
       }
