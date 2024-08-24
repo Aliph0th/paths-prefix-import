@@ -44,7 +44,7 @@ export class PrefixImport {
          this.scanPrefixes()
       );
       const updateImports = commands.registerCommand('paths-prefix-import.updateImports', args => {
-         this.updateImports(args.data, args.document);
+         this.updateImports(args.data, args.document, args.importPath);
       });
       const completionItemProvider = languages.registerCompletionItemProvider(
          ['typescript'],
@@ -121,14 +121,16 @@ export class PrefixImport {
       this.cache.replaceExportsByIndex(index, newExportTokens[0].exports);
    }
 
-   updateImports(data: CompletionDataItem, document: TextDocument) {
-      workspace.applyEdit(this.getEdit(data, document));
+   updateImports(data: CompletionDataItem, document: TextDocument, importPath: string) {
+      workspace.applyEdit(this.getEdit(data, document, importPath));
    }
 
-   private getEdit(data: CompletionDataItem, document: TextDocument): WorkspaceEdit {
+   private getEdit(
+      data: CompletionDataItem,
+      document: TextDocument,
+      importPath: string
+   ): WorkspaceEdit {
       const edit: WorkspaceEdit = new WorkspaceEdit();
-
-      const importPath = this.buildCompletionPath(data);
 
       if (!!this.findInImports(document, data.token)) {
          return edit;
@@ -179,17 +181,5 @@ export class PrefixImport {
          }
       }
       return null;
-   }
-
-   private buildCompletionPath(data: CompletionDataItem): string {
-      const pathToImport = path.resolve(
-         path.dirname(data.configPath),
-         data.baseUrl,
-         data.prefixPath.replace(regex.oneAsteriskAtTheEnd, '')
-      );
-      const suffix = path
-         .relative(pathToImport, data.file.fsPath)
-         .replace(new RegExp(`${path.extname(data.file.fsPath)}$`), '');
-      return path.join(data.prefix, suffix.replace(/index$/, '')).replace(/\\/g, '/');
    }
 }
