@@ -11,7 +11,8 @@ import {
    commands,
    languages,
    ExtensionContext,
-   Uri
+   Uri,
+   WorkspaceConfiguration
 } from 'vscode';
 import { Scanner } from './scanner';
 import { Notifier } from './notifier';
@@ -25,6 +26,7 @@ export class PrefixImport {
    private readonly cache: Cache;
    private readonly context: ExtensionContext;
    private readonly completionProvider: CompletionProvider;
+
    constructor(
       context: ExtensionContext,
       scanner: Scanner,
@@ -207,7 +209,13 @@ export class PrefixImport {
    }
 
    private createImportStatement(token: string, importPath: string, endline = false): string {
-      return `import { ${token} } from '${importPath}';${endline ? '\r\n' : ''}`;
+      const config = workspace.getConfiguration('paths-prefix-import');
+      const spaces = config.get<boolean>('bracketSpacing') ? ' ' : '';
+      const quotes = config.get<boolean>('singleQuotes') ? "'" : '"';
+      const semicolon = config.get<boolean>('useSemi') ? ';' : '';
+      return `import {${spaces}${token}${spaces}} from ${quotes}${importPath}${quotes}${semicolon}${
+         endline ? '\r\n' : ''
+      }`;
    }
 
    private findInImports(

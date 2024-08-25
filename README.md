@@ -8,7 +8,10 @@ Extension finds and provides completions for exports in files specified in `path
 
 This extension contributes the following settings:
 
--  `myExtension.enable`: Enable/disable this extension.
--  `myExtension.thing`: Set to `blah` to do something.
+-  `singleQuotes`: Use single quotes instead of double
+-  `bracketSpacing`: Put spaces between curly brackets
+-  `useSemi`: Use semicolon at the end of line
+
+---
 
 **Enjoy!**

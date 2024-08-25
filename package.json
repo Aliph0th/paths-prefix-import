@@ -22,7 +22,27 @@
             "command": "paths-prefix-import.scan-prefixes",
             "title": "Path Prefix Import: Scan Prefixes"
          }
-      ]
+      ],
+      "configuration": {
+         "title": "Paths Prefix Import configuration",
+         "properties": {
+            "paths-prefix-import.singleQuotes": {
+               "type": "boolean",
+               "default": true,
+               "description": "Use single quotes instead of double"
+            },
+            "paths-prefix-import.bracketSpacing": {
+               "type": "boolean",
+               "default": true,
+               "description": "Put spaces between curly brackets"
+            },
+            "paths-prefix-import.useSemi": {
+               "type": "boolean",
+               "default": true,
+               "description": "Use semicolon at the end of line"
+            }
+         }
+      }
    },
    "scripts": {
       "vscode:prepublish": "pnpm run package",
