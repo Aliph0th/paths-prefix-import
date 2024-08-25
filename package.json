@@ -4,7 +4,7 @@
    "description": "Extension for easy import of components using prefixed defined in tsconfig.json",
    "version": "0.0.1",
    "publisher": "Aliph0th",
-   "icon": "icon.png",
+   "icon": "assets/icon.png",
    "engines": {
       "vscode": "^1.92.0"
    },
