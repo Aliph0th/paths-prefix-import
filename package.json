@@ -5,6 +5,11 @@
    "version": "0.0.1",
    "publisher": "Aliph0th",
    "icon": "assets/icon.png",
+   "homepage": "https://github.com/Aliph0th/paths-prefix-import",
+   "repository": {
+      "type": "git",
+      "url": "https://github.com/Aliph0th/paths-prefix-import.git"
+   },
    "engines": {
       "vscode": "^1.92.0"
    },
