@@ -15,7 +15,7 @@ import {
 } from 'vscode';
 import { Scanner } from './scanner';
 import { Notifier } from './notifier';
-import { CompletionDataItem, PrefixedFile } from './common/types';
+import { CompletionDataItem, PrefixConfig, PrefixedFile } from './common/types';
 import { regex } from './common/regex';
 import path from 'path';
 
@@ -62,14 +62,25 @@ export class PrefixImport {
          await this.onChangeFile(file);
          this.statusBar.text = `{${this.cache.length}}`;
       });
-
       codeWatcher.onDidCreate(async (file: Uri) => {
          await this.onCreateFile(file);
          this.statusBar.text = `{${this.cache.length}}`;
       });
-
       codeWatcher.onDidDelete((file: Uri) => {
          this.cache.invalidateForFile(file);
+         this.statusBar.text = `{${this.cache.length}}`;
+      });
+
+      configWatcher.onDidChange(async (file: Uri) => {
+         await this.onChangeConfig(file);
+         this.statusBar.text = `{${this.cache.length}}`;
+      });
+      configWatcher.onDidCreate(async (file: Uri) => {
+         await this.onCreateConfig(file);
+         this.statusBar.text = `{${this.cache.length}}`;
+      });
+      configWatcher.onDidDelete((file: Uri) => {
+         this.cache.invalidateForConfigFile(file);
          this.statusBar.text = `{${this.cache.length}}`;
       });
    }
@@ -84,12 +95,39 @@ export class PrefixImport {
       if (configs.length) {
          this.cache.pushConfigs(configs);
       }
+      await this.handleConfigs(configs);
+   }
+
+   private async handleConfigs(configs: PrefixConfig[]) {
       const prefixedFiles = await this.scanner.findPrefixedFiles(configs);
       const parsedTokens = await this.scanner.parseExportTokens(prefixedFiles);
       if (parsedTokens.length) {
          this.cache.pushTokens(parsedTokens);
          this.statusBar.text = `{${this.cache.length}}`;
       }
+   }
+
+   async onChangeConfig(file: Uri) {
+      const { config, index } = this.cache.findConfigByFile(file);
+      if (!config) {
+         return;
+      }
+      this.cache.invalidateForConfigFile(file);
+      const newConfig = await this.scanner.readConfig(file);
+      if (!newConfig) {
+         return;
+      }
+      this.cache.replaceConfigByIndex(index, newConfig);
+      await this.handleConfigs([newConfig]);
+   }
+
+   async onCreateConfig(file: Uri) {
+      const config = await this.scanner.readConfig(file);
+      if (!config) {
+         return;
+      }
+      this.cache.pushConfigs([config]);
+      await this.handleConfigs([config]);
    }
 
    async onCreateFile(file: Uri) {

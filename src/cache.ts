@@ -65,8 +65,17 @@ export class Cache {
       return { exportToken: this.exports[index], index };
    }
 
+   findConfigByFile(file: Uri) {
+      const index = this.configs.findIndex(config => config.configFile.fsPath === file.fsPath);
+      return { config: this.configs[index], index };
+   }
+
    replaceExportsByIndex(index: number, exports: string[]) {
       this.exports[index].exports = exports;
+   }
+
+   replaceConfigByIndex(index: number, config: PrefixConfig) {
+      this.configs[index] = config;
    }
 
    lookForCompletions(text: string, uriWorkspace: WorkspaceFolder | undefined) {
@@ -87,6 +96,10 @@ export class Cache {
    }
 
    invalidateForFile(file: Uri) {
-      this.exports = this.exports.filter(ExportToken => ExportToken.file.fsPath !== file.fsPath);
+      this.exports = this.exports.filter(exportToken => exportToken.file.fsPath !== file.fsPath);
+   }
+
+   invalidateForConfigFile(file: Uri) {
+      this.exports = this.exports.filter(exportToken => exportToken.configPath !== file.fsPath);
    }
 }

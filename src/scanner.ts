@@ -1,6 +1,6 @@
 import JSON5 from 'json5';
 import path from 'path';
-import { workspace } from 'vscode';
+import { Uri, workspace } from 'vscode';
 import { joinPrefixedFiles } from './common/helpers';
 import { PrefixConfig, ExportToken, ParsingToken, PrefixedFile } from './common/types';
 import { Notifier } from './notifier';
@@ -12,22 +12,30 @@ export class Scanner {
       return await workspace.findFiles(relativePath, '**/node_modules/**', 999999);
    }
 
+   async readConfig(file: Uri): Promise<PrefixConfig | null> {
+      const text = await workspace.fs.readFile(file);
+      const config = JSON5.parse(text.toString());
+      if (config?.compilerOptions?.paths && config?.compilerOptions?.baseUrl) {
+         const {
+            compilerOptions: { baseUrl, paths }
+         } = config;
+         return {
+            configFile: file,
+            baseUrl,
+            paths
+         };
+      }
+      return null;
+   }
+
    async findConfigs() {
       const files = await this.findFiles('**/tsconfig*.json');
       const configs: PrefixConfig[] = [];
       for (const config of files) {
          try {
-            const file = await workspace.fs.readFile(config);
-            const cfg = JSON5.parse(file.toString());
-            if (cfg?.compilerOptions?.paths && cfg?.compilerOptions?.baseUrl) {
-               const {
-                  compilerOptions: { baseUrl, paths }
-               } = cfg;
-               configs.push({
-                  configFile: config,
-                  baseUrl,
-                  paths
-               });
+            const cfg = await this.readConfig(config);
+            if (cfg) {
+               configs.push(cfg);
             }
          } catch (e) {
             Notifier.warn(`Error reading ${config.fsPath}`);
