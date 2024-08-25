@@ -141,7 +141,6 @@ export class PrefixImport {
       };
       const newExportTokens = await this.scanner.parseExportTokens([prefixedFile]);
       this.cache.pushTokens(newExportTokens);
-      console.log(newExportTokens);
    }
 
    async onChangeFile(changedFile: Uri) {
