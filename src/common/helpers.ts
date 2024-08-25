@@ -1,5 +1,5 @@
 import { Uri } from 'vscode';
-import { CompletionDataItem, PrefixConfig, PrefixedFile } from './types';
+import { PrefixConfig, PrefixedFile } from './types';
 
 export function joinPrefixedFiles(
    array: PrefixedFile[],
@@ -8,7 +8,8 @@ export function joinPrefixedFiles(
    prefix: string
 ) {
    const existingRecord = array.find(
-      prefixedFile => prefixedFile.configPath === config.configFile.fsPath
+      prefixedFile =>
+         prefixedFile.configPath === config.configFile.fsPath && prefixedFile.prefix === prefix
    );
    if (existingRecord) {
       existingRecord.files = joinFiles(existingRecord.files, newArray);
