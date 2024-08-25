@@ -53,6 +53,8 @@ export class CompletionProvider implements CompletionItemProvider {
       const suffix = path
          .relative(pathToImport, data.file.fsPath)
          .replace(new RegExp(`${path.extname(data.file.fsPath)}$`), '');
-      return path.join(data.prefix, suffix.replace(/index$/, '')).replace(/\\/g, '/');
+      return path
+         .join(data.prefix.replace(regex.oneAsteriskAtTheEnd, ''), suffix.replace(/index$/, ''))
+         .replace(/\\/g, '/');
    }
 }
